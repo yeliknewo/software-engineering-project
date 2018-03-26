@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="C:/Users/Kiley Owen/Desktop/Libraries/json-20171018.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Kiley Owen/Desktop/Libraries/sqlite-jdbc-3.21.0.jar"/>
+	<classpathentry kind="lib" path="org.eclipse.jdt.annotation_2.1.0.v20160418-1457.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
