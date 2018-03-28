@@ -1,0 +1,28 @@
+CREATE TABLE IF NOT EXISTS page 
+  ( 
+     page_id           INTEGER NOT NULL PRIMARY KEY, 
+     wikipedia_page_id INTEGER NOT NULL UNIQUE, 
+     page_title        TEXT NOT NULL, 
+     last_updated_date TEXT 
+  ); 
+  
+CREATE TABLE IF NOT EXISTS path 
+  ( 
+     path_id           INTEGER NOT NULL PRIMARY KEY, 
+     from_page_id      INTEGER NOT NULL, 
+     to_page_id        INTEGER NOT NULL, 
+     distance          INTEGER NOT NULL, 
+     last_updated_date TEXT, 
+     FOREIGN KEY(from_page_id) REFERENCES page(page_id), 
+     FOREIGN KEY(to_page_id) REFERENCES page(page_id) 
+  ); 
+  
+CREATE TABLE IF NOT EXISTS path_to_path 
+  ( 
+     path_to_path_id   INTEGER NOT NULL PRIMARY KEY, 
+     from_path_id      INTEGER NOT NULL, 
+     to_path_id        INTEGER NOT NULL, 
+     last_updated_date TEXT, 
+     FOREIGN KEY(from_path_id) REFERENCES path(path_id), 
+     FOREIGN KEY(to_path_id) REFERENCES path(path_id) 
+  );

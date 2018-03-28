@@ -1,97 +1,134 @@
 
 package com.kileyowen.degrees_of_separation;
 
-import java.io.IOException;
-import java.sql.SQLException;
 import java.util.List;
 
+import com.kileyowen.degrees_of_separation.database.DatabaseRead;
 import com.kileyowen.degrees_of_separation.database.DatabaseRequestLinksHere;
-import com.kileyowen.degrees_of_separation.database.DatabaseRequestPageId;
+import com.kileyowen.degrees_of_separation.database.DatabaseWrite;
+import com.kileyowen.degrees_of_separation.database.ExceptionPageLinksNotStored;
+import com.kileyowen.degrees_of_separation.database.ExceptionPageNotStored;
+import com.kileyowen.degrees_of_separation.wikipedia.ExceptionPageDoesNotExistOnWiki;
+import com.kileyowen.degrees_of_separation.wikipedia.WikiPage;
+import com.kileyowen.degrees_of_separation.wikipedia.WikiPageId;
 import com.kileyowen.degrees_of_separation.wikipedia.WikiRequestLinksHere;
-import com.kileyowen.degrees_of_separation.wikipedia.WikiRequestPageId;
-import com.kileyowen.utils.ExceptionNull;
-import com.kileyowen.utils.NullUtils;
+import com.kileyowen.degrees_of_separation.wikipedia.WikiRequestWikiPage;
 
 public class Querier {
 
-	private static List<Page> getLinksHereByPageIdDatabase(final PageId pageId) throws SQLException, ExceptionNull {
+	private static List<Page> getLinksHereByPageDatabase(final Page page, final String databasePath) throws ExceptionPageLinksNotStored {
 
-		return new DatabaseRequestLinksHere(pageId).build().getPages();
-
-	}
-
-	private static List<Page> getLinksHereByPageIdWikipedia(final PageId pageId) throws IOException, ExceptionNull, ExceptionWikiQueryError {
-
-		return new WikiRequestLinksHere(pageId).build().getPages();
+		return new DatabaseRequestLinksHere(page, databasePath).build().getPages();
 
 	}
 
-	private static Page getPageByTitleDatabase(final String pageTitle) throws SQLException, ExceptionNull {
+	private static List<WikiPage> getLinksHereByWikiPageIdWikipedia(final WikiPageId wikiPageId) {
 
-		return new DatabaseRequestPageId(pageTitle).build().getPage();
+		return new WikiRequestLinksHere(wikiPageId).build().getPages();
 
 	}
 
-	private static Page getPageByTitleWikipedia(final String pageTitle) throws IOException, ExceptionNull, ExceptionWikiQueryError {
+	private static Page getPageByPageTitleDatabase(final PageTitle pageTitle, final String databasePath) throws ExceptionPageNotStored {
 
-		return new WikiRequestPageId(pageTitle).build().getPage();
+		return DatabaseRead.getPageByPageTitle(databasePath, pageTitle);
+
+	}
+
+	private static WikiPage getPageByPageTitleWikipedia(final PageTitle pageTitle) throws ExceptionPageDoesNotExistOnWiki {
+
+		return new WikiRequestWikiPage(pageTitle).build().getPage();
 
 	}
 
 	private final boolean online;
 
-	public Querier(final boolean newOnline) {
+	private final String databasePath;
+
+	public Querier(final boolean newOnline, final String newDatabasePath) {
 
 		this.online = newOnline;
 
+		this.databasePath = newDatabasePath;
+
+		DatabaseWrite.initDatabase(newDatabasePath);
+
 	}
 
-	public List<Page> getLinksHereByPageId(final PageId pageId) throws ExceptionPageDoesNotExist, ExceptionNull, IOException {
+	private void addPageLinksToDatabase(final Page page, final List<WikiPage> wikiPages) {
 
-		//		try {
-		//			return Querier.getLinksHereByPageIdDatabase(pageId);
-		//		} catch (final SQLException e) {
-		//			e.printStackTrace();
-		//
-		//		}
+	}
+
+	private void addPageToDatabase(final WikiPage wikiPage) {
+
+		DatabaseWrite.addPage(this.databasePath, wikiPage);
+
+	}
+
+	public List<Page> getLinksHereByPage(final Page page) throws ExceptionPageLinksNotStored {
+
+		try {
+
+			return Querier.getLinksHereByPageDatabase(page, this.databasePath);
+
+		} catch (final ExceptionPageLinksNotStored e) {
+
+			e.printStackTrace();
+
+		}
 
 		if (this.online) {
 
+			final List<WikiPage> wikiPages = Querier.getLinksHereByWikiPageIdWikipedia(page.getWikiPageId());
+
+			this.addPageLinksToDatabase(page, wikiPages);
+
 			try {
 
-				return Querier.getLinksHereByPageIdWikipedia(pageId);
+				return Querier.getLinksHereByPageDatabase(page, this.databasePath);
 
-			} catch (final ExceptionWikiQueryError e) {
+			} catch (final ExceptionPageLinksNotStored e) {
 
-				e.printStackTrace();
+				throw new RuntimeException("Failed to add page links to database", e);
 
 			}
 
 		}
 
-		throw new ExceptionPageDoesNotExist(NullUtils.assertNotNull(pageId.toString(), "PageId.ToString was null"));
+		throw new ExceptionPageLinksNotStored(String.format("Links not stored for Page: %s", page));
 
 	}
 
-	public Page getPageByTitle(final String pageTitle) throws ExceptionPageDoesNotExist, IOException, ExceptionNull {
+	public Page getPageByPageTitle(final PageTitle pageTitle) throws ExceptionPageDoesNotExistOnWiki {
 
-		//		try {
-		//			return Querier.getPageIdByTitleDatabase(pageTitle);
-		//		} catch (final SQLException e) {
-		//			e.printStackTrace();
-		//		}
+		try {
+
+			return Querier.getPageByPageTitleDatabase(pageTitle, this.databasePath);
+
+		} catch (final ExceptionPageNotStored e) {
+
+			e.printStackTrace();
+
+		}
 
 		if (this.online) {
 
+			final WikiPage wikiPage = Querier.getPageByPageTitleWikipedia(pageTitle);
+
+			this.addPageToDatabase(wikiPage);
+
 			try {
-				return Querier.getPageByTitleWikipedia(pageTitle);
-			} catch (final ExceptionWikiQueryError e) {
-				e.printStackTrace();
+
+				return Querier.getPageByPageTitleDatabase(pageTitle, this.databasePath);
+
+			} catch (final ExceptionPageNotStored e) {
+
+				throw new RuntimeException("Failed to add page to database", e);
+
 			}
 
 		}
 
-		throw new ExceptionPageDoesNotExist(pageTitle);
+		throw new ExceptionPageDoesNotExistOnWiki(pageTitle.toString());
 
 	}
 

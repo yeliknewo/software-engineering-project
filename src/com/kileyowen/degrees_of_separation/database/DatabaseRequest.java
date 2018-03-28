@@ -6,32 +6,62 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-
-import com.kileyowen.utils.ExceptionNull;
-import com.kileyowen.utils.NullUtils;
+import java.util.Optional;
 
 public abstract class DatabaseRequest<T extends DatabaseResult> {
 
-	private static final String DATABASE_LAUNCH_STRING = "jdbc:sqlite:test.db";
+	protected static final String DATABASE_LAUNCH_STRING = "jdbc:sqlite:";
 
-	public abstract T build() throws SQLException, ExceptionNull;
+	protected final static String makeDatabaseString(final String databasePath) {
 
-	protected ResultSet buildInternal() throws SQLException, ExceptionNull {
+		return DatabaseRequest.DATABASE_LAUNCH_STRING + databasePath;
 
-		try (final Connection connection = DriverManager.getConnection(DatabaseRequest.DATABASE_LAUNCH_STRING)) {
+	}
+
+	public abstract T build() throws ExceptionPageNotStored, ExceptionPageLinksNotStored;
+
+	protected Optional<T> buildInternal(final DatabaseOperation dataOp) throws ExceptionPageLinksNotStored, ExceptionPageNotStored {
+
+		try (final Connection connection = DriverManager.getConnection(this.getDatabaseString())) {
 
 			try (final Statement statement = connection.createStatement()) {
 
 				statement.setQueryTimeout(30);
 
-				return NullUtils.assertNotNull(statement.executeQuery(this.getQuery()), "Statement Query Result Set is null");
+				switch (dataOp) {
+
+					case READ:
+
+						return Optional.of(this.parse(this.buildInternalRead(statement)));
+
+					case WRITE:
+
+						this.buildInternalWrite(statement);
+
+						return Optional.empty();
+
+					default:
+
+						throw new RuntimeException("This should be impossible");
+
+				}
 
 			}
+
+		} catch (final SQLException e) {
+
+			throw new RuntimeException(e);
 
 		}
 
 	}
 
-	abstract String getQuery() throws ExceptionNull;
+	protected abstract ResultSet buildInternalRead(final Statement statement);
+
+	protected abstract void buildInternalWrite(final Statement statement);
+
+	protected abstract String getDatabaseString();
+
+	protected abstract T parse(ResultSet resultSet) throws ExceptionPageLinksNotStored, ExceptionPageNotStored;
 
 }

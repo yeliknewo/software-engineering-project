@@ -9,16 +9,20 @@ import com.kileyowen.degrees_of_separation.Page;
 
 public class DatabaseResultLinksHere extends DatabaseResult {
 
-	public DatabaseResultLinksHere(final ResultSet resultSet) {
+	private final List<Page> pages;
+
+	public DatabaseResultLinksHere(final ResultSet resultSet) throws ExceptionPageLinksNotStored {
 
 		// TODO: Parse Result Set
+
+		this.pages = new ArrayList<>();
 
 	}
 
 	public List<Page> getPages() {
 
-		// TODO Auto-generated method stub
-		return new ArrayList<>();
+		return this.pages;
+
 	}
 
 }

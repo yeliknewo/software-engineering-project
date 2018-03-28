@@ -1,0 +1,3 @@
+SELECT page_id, wikipedia_page_id, page_title FROM page WHERE page_title=\"%s\"
+
+SELECT page_id, wikipedia_page_id, page_title FROM page WHERE page_title=__PAGE_TITLE__

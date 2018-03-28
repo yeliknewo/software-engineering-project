@@ -1,15 +1,15 @@
 
-package com.kileyowen.degrees_of_separation;
+package com.kileyowen.degrees_of_separation.wikipedia;
 
 import org.eclipse.jdt.annotation.Nullable;
 
-public class PageId {
+public class WikiPageId {
 
-	private final int pageId;
+	private final int wikiPageId;
 
-	public PageId(final int newPageId) {
+	public WikiPageId(final int newWikiPageId) {
 
-		this.pageId = newPageId;
+		this.wikiPageId = newWikiPageId;
 
 	}
 
@@ -25,8 +25,8 @@ public class PageId {
 		if (this.getClass() != obj.getClass()) {
 			return false;
 		}
-		final PageId other = (PageId) obj;
-		if (this.pageId != other.pageId) {
+		final WikiPageId other = (WikiPageId) obj;
+		if (this.wikiPageId != other.wikiPageId) {
 			return false;
 		}
 		return true;
@@ -34,7 +34,7 @@ public class PageId {
 
 	public int getPageId() {
 
-		return this.pageId;
+		return this.wikiPageId;
 	}
 
 	@Override
@@ -42,15 +42,14 @@ public class PageId {
 
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + this.pageId;
+		result = prime * result + this.wikiPageId;
 		return result;
 	}
 
-	@Nullable
 	@Override
 	public String toString() {
 
-		return Integer.toString(this.pageId);
+		return Integer.toString(this.wikiPageId);
 
 	}
 

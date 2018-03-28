@@ -1,7 +1,6 @@
 
 package com.kileyowen.degrees_of_separation.wikipedia;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -9,23 +8,19 @@ import java.util.Optional;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import com.kileyowen.degrees_of_separation.ExceptionWikiQueryError;
-import com.kileyowen.degrees_of_separation.Page;
-import com.kileyowen.degrees_of_separation.PageId;
-import com.kileyowen.utils.ExceptionNull;
-import com.kileyowen.utils.NullUtils;
+import com.kileyowen.degrees_of_separation.PageTitle;
 
 public class WikiResultLinksHere extends WikiResult {
 
-	private final List<Page> pages;
+	private final List<WikiPage> pages;
 
-	public WikiResultLinksHere(final JSONObject rootJson) throws IOException, ExceptionNull, ExceptionWikiQueryError {
+	public WikiResultLinksHere(final JSONObject rootJson) {
 
 		this.pages = new ArrayList<>();
 
 		if (rootJson.has(WikiResult.CONTINUE)) {
 
-			Optional<PageId> pageIdOpt = Optional.empty();
+			Optional<WikiPageId> pageIdOpt = Optional.empty();
 
 			if (rootJson.has(WikiResult.QUERY)) {
 				final JSONObject queryObj = rootJson.getJSONObject(WikiResult.QUERY);
@@ -40,7 +35,7 @@ public class WikiResultLinksHere extends WikiResult {
 
 						if (pageObj.has(WikiResult.PAGE_ID)) {
 
-							pageIdOpt = Optional.of(new PageId(pageObj.getInt(WikiResult.PAGE_ID)));
+							pageIdOpt = Optional.of(new WikiPageId(pageObj.getInt(WikiResult.PAGE_ID)));
 
 						}
 
@@ -62,7 +57,7 @@ public class WikiResultLinksHere extends WikiResult {
 
 				final int linksHereContinue = continueObj.getInt(WikiResult.LINKS_HERE_CONTINUE);
 
-				this.pages.addAll(new WikiRequestLinksHere(pageIdOpt.get(), NullUtils.assertNotNull(Integer.toString(linksHereContinue), "Integer.ToString was null")).build().getPages());
+				this.pages.addAll(new WikiRequestLinksHere(pageIdOpt.get(), Integer.toString(linksHereContinue)).build().getPages());
 
 			}
 
@@ -87,7 +82,7 @@ public class WikiResultLinksHere extends WikiResult {
 
 							if (!(keyValueObj instanceof JSONObject)) {
 
-								throw new ExceptionWikiQueryError("KeyValueObj was not JSONObject");
+								throw new RuntimeException("KeyValueObj was not JSONObject");
 
 							}
 
@@ -95,7 +90,7 @@ public class WikiResultLinksHere extends WikiResult {
 
 							if (keyValueJsonObj.has(WikiResult.PAGE_ID) && keyValueJsonObj.has(WikiResult.PAGE_TITLE)) {
 
-								this.pages.add(new Page(new PageId(keyValueJsonObj.getInt(WikiResult.PAGE_ID)), NullUtils.assertNotNull(keyValueJsonObj.getString(WikiResult.PAGE_TITLE), "PageTitle was null")));
+								this.pages.add(new WikiPage(new WikiPageId(keyValueJsonObj.getInt(WikiResult.PAGE_ID)), PageTitle.makePageTitleByWikiPageTitle(keyValueJsonObj.getString(WikiResult.PAGE_TITLE))));
 
 							}
 
@@ -111,7 +106,7 @@ public class WikiResultLinksHere extends WikiResult {
 
 	}
 
-	public List<Page> getPages() {
+	public List<WikiPage> getPages() {
 
 		return this.pages;
 

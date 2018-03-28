@@ -3,17 +3,13 @@ package com.kileyowen.degrees_of_separation.wikipedia;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Scanner;
 
 import org.eclipse.jdt.annotation.Nullable;
 import org.json.JSONObject;
-
-import com.kileyowen.degrees_of_separation.ExceptionWikiQueryError;
-import com.kileyowen.utils.ExceptionNull;
-import com.kileyowen.utils.NullUtils;
 
 public abstract class WikiRequest<T extends WikiResult> {
 
@@ -29,12 +25,12 @@ public abstract class WikiRequest<T extends WikiResult> {
 
 	private static final String BASE_URL = "https://en.wikipedia.org/w/api.php?action=query&format=json";
 
-	private static String addUrlParameter(final String original, @Nullable final String key, final String value) throws ExceptionNull {
+	private static String addUrlParameter(final String original, @Nullable final String key, final String value) {
 
 		final StringBuilder stringBuilder = new StringBuilder();
 		stringBuilder.append(original);
 		stringBuilder.append(String.format("&%s=%s", key, value));
-		return NullUtils.assertNotNull(stringBuilder.toString(), "String.format was null");
+		return stringBuilder.toString();
 
 	}
 
@@ -52,9 +48,9 @@ public abstract class WikiRequest<T extends WikiResult> {
 
 	}
 
-	public abstract T build() throws IOException, ExceptionNull, ExceptionWikiQueryError;
+	public abstract T build() throws ExceptionPageDoesNotExistOnWiki;
 
-	protected JSONObject buildInternal() throws ExceptionNull, IOException {
+	protected JSONObject buildInternal() {
 
 		String urlString = WikiRequest.BASE_URL;
 
@@ -64,25 +60,25 @@ public abstract class WikiRequest<T extends WikiResult> {
 
 		}
 
-		final URL url = new URL(urlString);
+		try {
 
-		final HttpURLConnection con = (HttpURLConnection) url.openConnection();
+			final URL url = new URL(urlString);
 
-		con.setRequestMethod("GET");
+			final HttpURLConnection con = (HttpURLConnection) url.openConnection();
 
-		String out = "";
+			con.setRequestMethod("GET");
 
-		try (final Scanner scan = new Scanner(con.getInputStream())) {
+			return new JSONObject(con.getInputStream());
 
-			while (scan.hasNext()) {
+		} catch (final MalformedURLException e) {
 
-				out += scan.next();
+			throw new RuntimeException(e);
 
-			}
+		} catch (final IOException e) {
+
+			throw new RuntimeException(e);
 
 		}
-
-		return new JSONObject(out);
 
 	}
 

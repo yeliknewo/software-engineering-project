@@ -4,7 +4,6 @@ package com.kileyowen.degrees_of_separation;
 import java.util.Optional;
 
 import com.kileyowen.utils.ExceptionNull;
-import com.kileyowen.utils.NullUtils;
 
 public class Node {
 
@@ -14,21 +13,21 @@ public class Node {
 
 	private final Page page;
 
-	public Node(final Page newPage) throws ExceptionNull {
+	public Node(final Page newPage) {
 
 		this.page = newPage;
 
-		this.fromOpt = NullUtils.assertNotNull(Optional.empty(), "Optional.Empty was null");
+		this.fromOpt = Optional.empty();
 
 		this.distance = 0;
 
 	}
 
-	public Node(final Page newPage, final Node newFrom, final int newDistance) throws ExceptionNull {
+	public Node(final Page newPage, final Node newFrom, final int newDistance) {
 
 		this.page = newPage;
 
-		this.fromOpt = NullUtils.assertNotNull(Optional.of(newFrom), "Optional.Of was null");
+		this.fromOpt = Optional.of(newFrom);
 
 		this.distance = newDistance;
 
@@ -55,18 +54,6 @@ public class Node {
 	public Page getPage() {
 
 		return this.page;
-	}
-
-	public PageId getPageId() {
-
-		return this.getPage().getPageId();
-
-	}
-
-	public String getPageTitle() {
-
-		return this.getPage().getTitle();
-
 	}
 
 	public boolean hasFrom() {

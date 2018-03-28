@@ -1,10 +1,3 @@
-/**
- *
- */
-/**
- * @author Kiley Owen
- *
- */
 
 @NonNullByDefault
 

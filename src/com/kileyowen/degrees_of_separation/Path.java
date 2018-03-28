@@ -10,7 +10,7 @@ public class Path {
 
 	private final List<Page> pagesInOrder;
 
-	public Path(final Node node) throws ExceptionNull {
+	public Path(final Node node) {
 
 		this.pagesInOrder = new ArrayList<>();
 
@@ -20,7 +20,14 @@ public class Path {
 
 			this.pagesInOrder.add(currentNode.getPage());
 
-			currentNode = currentNode.getFrom();
+			try {
+				currentNode = currentNode.getFrom();
+
+			} catch (final ExceptionNull e) {
+
+				throw new RuntimeException(e);
+
+			}
 
 		}
 
