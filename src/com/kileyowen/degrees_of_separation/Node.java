@@ -62,4 +62,10 @@ public class Node {
 
 	}
 
+	@Override
+	public String toString() {
+
+		return "Node [fromOpt=" + this.fromOpt + ", distance=" + this.distance + ", page=" + this.page + "]";
+	}
+
 }

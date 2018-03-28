@@ -29,4 +29,10 @@ public class WikiPage {
 
 	}
 
+	@Override
+	public String toString() {
+
+		return "WikiPage [wikiPageId=" + this.wikiPageId + ", pageTitle=" + this.pageTitle + "]";
+	}
+
 }

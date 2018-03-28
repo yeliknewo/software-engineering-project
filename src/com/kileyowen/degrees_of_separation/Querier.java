@@ -3,42 +3,14 @@ package com.kileyowen.degrees_of_separation;
 
 import java.util.List;
 
-import com.kileyowen.degrees_of_separation.database.DatabaseRead;
-import com.kileyowen.degrees_of_separation.database.DatabaseRequestLinksHere;
-import com.kileyowen.degrees_of_separation.database.DatabaseWrite;
+import com.kileyowen.degrees_of_separation.database.DatabaseQuerier;
 import com.kileyowen.degrees_of_separation.database.ExceptionPageLinksNotStored;
 import com.kileyowen.degrees_of_separation.database.ExceptionPageNotStored;
 import com.kileyowen.degrees_of_separation.wikipedia.ExceptionPageDoesNotExistOnWiki;
 import com.kileyowen.degrees_of_separation.wikipedia.WikiPage;
-import com.kileyowen.degrees_of_separation.wikipedia.WikiPageId;
-import com.kileyowen.degrees_of_separation.wikipedia.WikiRequestLinksHere;
-import com.kileyowen.degrees_of_separation.wikipedia.WikiRequestWikiPage;
+import com.kileyowen.degrees_of_separation.wikipedia.WikipediaQuerier;
 
 public class Querier {
-
-	private static List<Page> getLinksHereByPageDatabase(final Page page, final String databasePath) throws ExceptionPageLinksNotStored {
-
-		return new DatabaseRequestLinksHere(page, databasePath).build().getPages();
-
-	}
-
-	private static List<WikiPage> getLinksHereByWikiPageIdWikipedia(final WikiPageId wikiPageId) {
-
-		return new WikiRequestLinksHere(wikiPageId).build().getPages();
-
-	}
-
-	private static Page getPageByPageTitleDatabase(final PageTitle pageTitle, final String databasePath) throws ExceptionPageNotStored {
-
-		return DatabaseRead.getPageByPageTitle(databasePath, pageTitle);
-
-	}
-
-	private static WikiPage getPageByPageTitleWikipedia(final PageTitle pageTitle) throws ExceptionPageDoesNotExistOnWiki {
-
-		return new WikiRequestWikiPage(pageTitle).build().getPage();
-
-	}
 
 	private final boolean online;
 
@@ -50,17 +22,7 @@ public class Querier {
 
 		this.databasePath = newDatabasePath;
 
-		DatabaseWrite.initDatabase(newDatabasePath);
-
-	}
-
-	private void addPageLinksToDatabase(final Page page, final List<WikiPage> wikiPages) {
-
-	}
-
-	private void addPageToDatabase(final WikiPage wikiPage) {
-
-		DatabaseWrite.addPage(this.databasePath, wikiPage);
+		DatabaseQuerier.initDatabase(newDatabasePath);
 
 	}
 
@@ -68,25 +30,25 @@ public class Querier {
 
 		try {
 
-			return Querier.getLinksHereByPageDatabase(page, this.databasePath);
+			return DatabaseQuerier.getPageLinksByPage(this.databasePath, page);
 
-		} catch (final ExceptionPageLinksNotStored e) {
+		} catch (final ExceptionPageLinksNotStored | ExceptionPageNotStored e) {
 
-			e.printStackTrace();
+			//			e.printStackTrace();
 
 		}
 
 		if (this.online) {
 
-			final List<WikiPage> wikiPages = Querier.getLinksHereByWikiPageIdWikipedia(page.getWikiPageId());
+			final List<WikiPage> wikiPages = WikipediaQuerier.getPageLinksByPage(page.getWikiPageId());
 
-			this.addPageLinksToDatabase(page, wikiPages);
+			DatabaseQuerier.addPageLinksToDatabase(this.databasePath, page, wikiPages);
 
 			try {
 
-				return Querier.getLinksHereByPageDatabase(page, this.databasePath);
+				return DatabaseQuerier.getPageLinksByPage(this.databasePath, page);
 
-			} catch (final ExceptionPageLinksNotStored e) {
+			} catch (final ExceptionPageLinksNotStored | ExceptionPageNotStored e) {
 
 				throw new RuntimeException("Failed to add page links to database", e);
 
@@ -102,23 +64,23 @@ public class Querier {
 
 		try {
 
-			return Querier.getPageByPageTitleDatabase(pageTitle, this.databasePath);
+			return DatabaseQuerier.getPageByPageTitle(this.databasePath, pageTitle);
 
 		} catch (final ExceptionPageNotStored e) {
 
-			e.printStackTrace();
+			//			e.printStackTrace();D
 
 		}
 
 		if (this.online) {
 
-			final WikiPage wikiPage = Querier.getPageByPageTitleWikipedia(pageTitle);
+			final WikiPage wikiPage = WikipediaQuerier.getPageByPageTitle(pageTitle);
 
-			this.addPageToDatabase(wikiPage);
+			DatabaseQuerier.addPage(this.databasePath, wikiPage);
 
 			try {
 
-				return Querier.getPageByPageTitleDatabase(pageTitle, this.databasePath);
+				return DatabaseQuerier.getPageByPageTitle(this.databasePath, pageTitle);
 
 			} catch (final ExceptionPageNotStored e) {
 

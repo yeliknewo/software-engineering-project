@@ -1,15 +1,14 @@
+//
 
 package com.kileyowen.degrees_of_separation;
 
+import org.eclipse.jdt.annotation.Nullable;
+
 public class PageTitle {
-
-	private static final String DATABASE_KEY = "";
-
-	private static final String WIKI_KEY = "";
 
 	private static final String databaseToWiki(final String databasePageTitle) {
 
-		return databasePageTitle.replaceAll(PageTitle.DATABASE_KEY, PageTitle.WIKI_KEY);
+		return databasePageTitle;//databasePageTitle.replaceAll(PageTitle.DATABASE_KEY, PageTitle.WIKI_KEY);
 
 	}
 
@@ -27,7 +26,7 @@ public class PageTitle {
 
 	private static final String wikiToDatabase(final String wikiPageTitle) {
 
-		return wikiPageTitle.replaceAll(PageTitle.WIKI_KEY, PageTitle.DATABASE_KEY);
+		return wikiPageTitle.replaceAll(" ", "_").replaceAll("\"", "\\\"");
 
 	}
 
@@ -35,8 +34,27 @@ public class PageTitle {
 
 	private PageTitle(final String newWikiPageTitle) {
 
-		this.wikiPageTitle = newWikiPageTitle.replaceAll(" ", "_");
+		this.wikiPageTitle = newWikiPageTitle;
 
+	}
+
+	@Override
+	public boolean equals(final @Nullable Object obj) {
+
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (this.getClass() != obj.getClass()) {
+			return false;
+		}
+		final PageTitle other = (PageTitle) obj;
+		if (!this.wikiPageTitle.equals(other.wikiPageTitle)) {
+			return false;
+		}
+		return true;
 	}
 
 	public String getDatabasePageTitle() {
@@ -49,6 +67,21 @@ public class PageTitle {
 
 		return this.wikiPageTitle;
 
+	}
+
+	@Override
+	public int hashCode() {
+
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + (this.wikiPageTitle == null ? 0 : this.wikiPageTitle.hashCode());
+		return result;
+	}
+
+	@Override
+	public String toString() {
+
+		return "PageTitle [wikiPageTitle=" + this.wikiPageTitle + "]";
 	}
 
 }
