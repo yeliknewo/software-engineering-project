@@ -1,0 +1,16 @@
+.label{
+    -fx-font-size: 20px;
+}
+.tab {
+    -fx-pref-width:334px;
+}
+
+.tab-selected{
+}
+
+.tab-pane{
+    -fx-padding: 0 0 0 0;
+}
+.button{
+    -fx-pref-width:150px;
+}
