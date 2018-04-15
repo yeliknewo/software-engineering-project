@@ -17,25 +17,9 @@ import com.kileyowen.utils.NullUtils;
 
 public class DatabaseQuerier {
 
+	private static final Integer DEFAULT_COMMIT_COUNTER = new Integer(100000);
+
 	private static final String DEFAULT_STRING_ADDRESS = "test.db";
-
-	private static final ThreadLocal<Connection> CONNECTION = NullUtils.assertNotNull(ThreadLocal.withInitial(() -> {
-
-		try {
-
-			final Connection connection = NullUtils.assertNotNull(DriverManager.getConnection(DatabaseQuerier.makeDatabaseString(DatabaseQuerier.DEFAULT_STRING_ADDRESS)), "Failed to connect to database");
-
-			connection.setAutoCommit(false);
-
-			return connection;
-
-		} catch (final SQLException e) {
-
-			throw new RuntimeException(e);
-
-		}
-
-	}), "Connection is null");
 
 	private static final ThreadLocal<Integer> COMMIT_COUNTER = NullUtils.assertNotNull(ThreadLocal.withInitial(() -> {
 
@@ -43,7 +27,7 @@ public class DatabaseQuerier {
 
 	}), "Commit Counter is null");
 
-	private static final Integer DEFAULT_COMMIT_COUNTER = new Integer(10000);
+	private static final Connection CONNECTION = DatabaseQuerier.getConnection();
 
 	public static final void addPage(final WikiPage wikiPage) {
 
@@ -112,24 +96,60 @@ public class DatabaseQuerier {
 
 	}
 
+	public static void commit() {
+
+		try {
+			DatabaseQuerier.getConnection().commit();
+		} catch (final SQLException e) {
+			throw new RuntimeException(e);
+		}
+
+	}
+
 	public static ThreadLocal<Integer> getCommitCounter() {
 
 		return DatabaseQuerier.COMMIT_COUNTER;
 	}
 
-	private static final Connection getConnection() throws SQLException {
+	private static final Connection getConnection() {
 
 		DatabaseQuerier.getCommitCounter().set(new Integer(DatabaseQuerier.getCommitCounter().get().intValue() - 1));
+
+		if (DatabaseQuerier.CONNECTION == null) {
+
+			try {
+
+				final Connection connection = NullUtils.assertNotNull(DriverManager.getConnection(DatabaseQuerier.makeDatabaseString(DatabaseQuerier.DEFAULT_STRING_ADDRESS)), "Failed to connect to database");
+
+				connection.setAutoCommit(false);
+
+				return connection;
+
+			} catch (final SQLException e) {
+
+				throw new RuntimeException(e);
+
+			}
+
+		}
 
 		if (DatabaseQuerier.getCommitCounter().get().intValue() <= 0) {
 
 			DatabaseQuerier.getCommitCounter().set(DatabaseQuerier.DEFAULT_COMMIT_COUNTER);
 
-			DatabaseQuerier.CONNECTION.get().commit();
+			try {
+
+				DatabaseQuerier.CONNECTION.commit();
+
+			} catch (final SQLException e) {
+
+				throw new RuntimeException(e);
+
+			}
 
 		}
 
-		return DatabaseQuerier.CONNECTION.get();
+		return DatabaseQuerier.CONNECTION;
 
 	}
 

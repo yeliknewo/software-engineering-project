@@ -10,13 +10,13 @@ import com.kileyowen.degrees_of_separation.PageTitle;
 import com.kileyowen.degrees_of_separation.Path;
 import com.kileyowen.degrees_of_separation.database.ExceptionPageLinksNotStored;
 
-public class TestOnline {
+public class TestOffline {
 
 	public static void main(final String[] args) {
 
 		final ConcurrentLinkedQueue<String> pageTitles = new ConcurrentLinkedQueue<>();
 
-		final DijkstraControl dc = new DijkstraControl(true, pageTitles);
+		final DijkstraControl dc = new DijkstraControl(false, pageTitles);
 
 		Path path;
 

@@ -23,6 +23,12 @@ public class Querier {
 
 	}
 
+	public void commit() {
+
+		DatabaseQuerier.commit();
+
+	}
+
 	public List<Page> getLinksHereByPage(final Page page) throws ExceptionPageLinksNotStored {
 
 		try {

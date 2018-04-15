@@ -32,4 +32,18 @@ public class Path {
 		return "Path [pagesInOrder=" + this.pagesInOrder + "]";
 	}
 
+	public String toStringForGui() {
+
+		String s = "";
+
+		for (final Page page : this.pagesInOrder) {
+
+			s += String.format(" %s ->", page.getPageTitle().getRawPageTitle());
+
+		}
+
+		return s.substring(0, s.length() - 3);
+
+	}
+
 }
