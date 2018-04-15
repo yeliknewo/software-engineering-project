@@ -9,20 +9,17 @@ import com.kileyowen.degrees_of_separation.database.ExceptionPageNotStored;
 import com.kileyowen.degrees_of_separation.wikipedia.ExceptionPageDoesNotExistOnWiki;
 import com.kileyowen.degrees_of_separation.wikipedia.WikiPage;
 import com.kileyowen.degrees_of_separation.wikipedia.WikipediaQuerier;
+import com.kileyowen.utils.NullUtils;
 
 public class Querier {
 
 	private final boolean online;
 
-	private final String databasePath;
-
-	public Querier(final boolean newOnline, final String newDatabasePath) {
+	public Querier(final boolean newOnline) {
 
 		this.online = newOnline;
 
-		this.databasePath = newDatabasePath;
-
-		DatabaseQuerier.initDatabase(newDatabasePath);
+		DatabaseQuerier.initDatabase();
 
 	}
 
@@ -30,7 +27,7 @@ public class Querier {
 
 		try {
 
-			return DatabaseQuerier.getPageLinksByPage(this.databasePath, page);
+			return DatabaseQuerier.getPageLinksByPage(page);
 
 		} catch (final ExceptionPageLinksNotStored | ExceptionPageNotStored e) {
 
@@ -42,11 +39,11 @@ public class Querier {
 
 			final List<WikiPage> wikiPages = WikipediaQuerier.getPageLinksByPage(page.getWikiPageId());
 
-			DatabaseQuerier.addPageLinksToDatabase(this.databasePath, page, wikiPages);
+			DatabaseQuerier.addPageLinksToDatabase(page, wikiPages);
 
 			try {
 
-				return DatabaseQuerier.getPageLinksByPage(this.databasePath, page);
+				return DatabaseQuerier.getPageLinksByPage(DatabaseQuerier.getPageByPageTitle(page.getPageTitle()));
 
 			} catch (final ExceptionPageLinksNotStored | ExceptionPageNotStored e) {
 
@@ -56,7 +53,7 @@ public class Querier {
 
 		}
 
-		throw new ExceptionPageLinksNotStored(String.format("Links not stored for Page: %s", page));
+		throw new ExceptionPageLinksNotStored(NullUtils.assertNotNull(String.format("Links not stored for Page: %s", page), "String format was null"));
 
 	}
 
@@ -64,7 +61,7 @@ public class Querier {
 
 		try {
 
-			return DatabaseQuerier.getPageByPageTitle(this.databasePath, pageTitle);
+			return DatabaseQuerier.getPageByPageTitle(pageTitle);
 
 		} catch (final ExceptionPageNotStored e) {
 
@@ -76,11 +73,11 @@ public class Querier {
 
 			final WikiPage wikiPage = WikipediaQuerier.getPageByPageTitle(pageTitle);
 
-			DatabaseQuerier.addPage(this.databasePath, wikiPage);
+			DatabaseQuerier.addPage(wikiPage);
 
 			try {
 
-				return DatabaseQuerier.getPageByPageTitle(this.databasePath, pageTitle);
+				return DatabaseQuerier.getPageByPageTitle(pageTitle);
 
 			} catch (final ExceptionPageNotStored e) {
 

@@ -1,40 +1,17 @@
-//
 
 package com.kileyowen.degrees_of_separation;
 
 import org.eclipse.jdt.annotation.Nullable;
 
+import com.kileyowen.utils.NullUtils;
+
 public class PageTitle {
 
-	private static final String databaseToWiki(final String databasePageTitle) {
+	private final String rawPageTitle;
 
-		return databasePageTitle;//databasePageTitle.replaceAll(PageTitle.DATABASE_KEY, PageTitle.WIKI_KEY);
+	public PageTitle(final String newWikiPageTitle) {
 
-	}
-
-	public static final PageTitle makePageTitleByDatabasePageTitle(final String databasePageTitle) {
-
-		return new PageTitle(PageTitle.databaseToWiki(databasePageTitle));
-
-	}
-
-	public static final PageTitle makePageTitleByWikiPageTitle(final String wikiPageTitle) {
-
-		return new PageTitle(wikiPageTitle);
-
-	}
-
-	private static final String wikiToDatabase(final String wikiPageTitle) {
-
-		return wikiPageTitle.replaceAll(" ", "_").replaceAll("\"", "\\\"");
-
-	}
-
-	final String wikiPageTitle;
-
-	private PageTitle(final String newWikiPageTitle) {
-
-		this.wikiPageTitle = newWikiPageTitle;
+		this.rawPageTitle = newWikiPageTitle;
 
 	}
 
@@ -51,7 +28,7 @@ public class PageTitle {
 			return false;
 		}
 		final PageTitle other = (PageTitle) obj;
-		if (!this.wikiPageTitle.equals(other.wikiPageTitle)) {
+		if (!this.rawPageTitle.equals(other.rawPageTitle)) {
 			return false;
 		}
 		return true;
@@ -59,13 +36,19 @@ public class PageTitle {
 
 	public String getDatabasePageTitle() {
 
-		return PageTitle.wikiToDatabase(this.getWikiPageTitle());
+		return NullUtils.assertNotNull(this.rawPageTitle.replaceAll("'", "''").replaceAll(" ", "_"), "Database page Title was null");
+
+	}
+
+	public String getRawPageTitle() {
+
+		return this.rawPageTitle;
 
 	}
 
 	public String getWikiPageTitle() {
 
-		return this.wikiPageTitle;
+		return NullUtils.assertNotNull(this.rawPageTitle.replaceAll(" ", "%20"), "Wiki Page Title was null");
 
 	}
 
@@ -74,14 +57,14 @@ public class PageTitle {
 
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + (this.wikiPageTitle == null ? 0 : this.wikiPageTitle.hashCode());
+		result = prime * result + this.rawPageTitle.hashCode();
 		return result;
 	}
 
 	@Override
 	public String toString() {
 
-		return "PageTitle [wikiPageTitle=" + this.wikiPageTitle + "]";
+		return "PageTitle [wikiPageTitle=" + this.rawPageTitle + "]";
 	}
 
 }

@@ -1,9 +1,10 @@
 CREATE TABLE IF NOT EXISTS page 
   ( 
-     page_id           INTEGER NOT NULL PRIMARY KEY, 
-     wikipedia_page_id INTEGER NOT NULL UNIQUE, 
-     page_title        TEXT NOT NULL, 
-     last_updated_date TEXT 
+     page_id           			INTEGER NOT NULL PRIMARY KEY, 
+     wikipedia_page_id 			INTEGER NOT NULL UNIQUE, 
+     page_title        			TEXT NOT NULL, 
+     last_updated_date 			TEXT,
+     last_links_updated_date 	TEXT
   ); 
   
 CREATE TABLE IF NOT EXISTS path 
@@ -17,12 +18,15 @@ CREATE TABLE IF NOT EXISTS path
      FOREIGN KEY(to_page_id) REFERENCES page(page_id) 
   ); 
   
-CREATE TABLE IF NOT EXISTS path_to_path 
+CREATE TABLE IF NOT EXISTS path_link 
   ( 
-     path_to_path_id   INTEGER NOT NULL PRIMARY KEY, 
-     from_path_id      INTEGER NOT NULL, 
-     to_path_id        INTEGER NOT NULL, 
-     last_updated_date TEXT, 
-     FOREIGN KEY(from_path_id) REFERENCES path(path_id), 
-     FOREIGN KEY(to_path_id) REFERENCES path(path_id) 
+     path_link_id   	INTEGER NOT NULL PRIMARY KEY, 
+     path_fk     		INTEGER NOT NULL, 
+     from_page_id   	INTEGER NOT NULL, 
+     to_page_id			INTEGER NOT NULL,
+     path_link_index	INTEGER NOT NULL,
+     last_updated_date 	TEXT,
+     FOREIGN KEY(path_fk) REFERENCES path(path_id),
+     FOREIGN KEY(from_page_id) REFERENCES page(page_id), 
+     FOREIGN KEY(to_page_id) REFERENCES page(page_id) 
   );

@@ -12,15 +12,13 @@ public class TestOnline {
 
 	public static void main(final String[] args) {
 
-		final String databasePath = "test.db";
-
-		final DijkstraControl dc = new DijkstraControl(true, databasePath);
+		final DijkstraControl dc = new DijkstraControl(true);
 
 		Path path;
 
 		try {
 
-			path = dc.runSearch(PageTitle.makePageTitleByWikiPageTitle("Walton_Correctional_Institution"), PageTitle.makePageTitleByWikiPageTitle("Britton Hill"));
+			path = dc.runSearch(new PageTitle("Walton_Correctional_Institution"), new PageTitle("Britton Hill"));
 
 		} catch (final ExceptionBadStartPageTitle e) {
 

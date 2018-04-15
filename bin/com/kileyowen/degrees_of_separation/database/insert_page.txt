@@ -1,1 +1,3 @@
 INSERT INTO page (wikipedia_page_id, page_title, last_updated_date) VALUES (%s, %s, CURRENT_DATE);
+
+UPDATE page SET last_links_updated_date=CURRENT_DATE WHERE page_id=%s

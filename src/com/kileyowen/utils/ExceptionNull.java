@@ -5,7 +5,7 @@ package com.kileyowen.utils;
  * @author Kiley Owen
  *         Thrown when a value is null
  */
-public class ExceptionNull extends Exception {
+public class ExceptionNull extends RuntimeException {
 
 	/**
 	 *

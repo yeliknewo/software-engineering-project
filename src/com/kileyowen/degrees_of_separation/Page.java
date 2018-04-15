@@ -10,11 +10,15 @@ public class Page {
 
 	private final DatabasePageId databasePageId;
 
+	//	private final @Nullable Date lastLinksUpdatedDate;
+
+	private final boolean linksUpToDate;
+
 	private final WikiPageId wikiPageId;
 
 	private final PageTitle pageTitle;
 
-	public Page(final DatabasePageId newDatabasePageId, final WikiPageId newWikiPageId, final PageTitle newPageTitle) {
+	public Page(final DatabasePageId newDatabasePageId, final WikiPageId newWikiPageId, final PageTitle newPageTitle, final boolean newLinksUpToDate) {//final @Nullable Date newLastLinksUpdatedDate
 
 		this.databasePageId = newDatabasePageId;
 
@@ -22,6 +26,15 @@ public class Page {
 
 		this.pageTitle = newPageTitle;
 
+		this.linksUpToDate = newLinksUpToDate;
+
+		//		this.lastLinksUpdatedDate = newLastLinksUpdatedDate;
+
+	}
+
+	public boolean areLinksUpToDate() {
+
+		return this.linksUpToDate;
 	}
 
 	@Override
@@ -48,6 +61,11 @@ public class Page {
 		}
 		return true;
 	}
+
+	//	public @Nullable Date getLastLinksUpdatedDate() {
+	//
+	//		return this.lastLinksUpdatedDate;
+	//	}
 
 	public DatabasePageId getDatabasePageId() {
 

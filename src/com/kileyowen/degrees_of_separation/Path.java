@@ -4,8 +4,6 @@ package com.kileyowen.degrees_of_separation;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.kileyowen.utils.ExceptionNull;
-
 public class Path {
 
 	private final List<Page> pagesInOrder;
@@ -20,14 +18,7 @@ public class Path {
 
 			this.pagesInOrder.add(currentNode.getPage());
 
-			try {
-				currentNode = currentNode.getFrom();
-
-			} catch (final ExceptionNull e) {
-
-				throw new RuntimeException(e);
-
-			}
+			currentNode = currentNode.getFrom();
 
 		}
 

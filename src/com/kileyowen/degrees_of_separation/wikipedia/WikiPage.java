@@ -7,7 +7,7 @@ public class WikiPage {
 
 	private final WikiPageId wikiPageId;
 
-	private final PageTitle pageTitle;
+	private PageTitle pageTitle;
 
 	public WikiPage(final WikiPageId newWikiPageId, final PageTitle newPageTitle) {
 
@@ -33,6 +33,11 @@ public class WikiPage {
 	public String toString() {
 
 		return "WikiPage [wikiPageId=" + this.wikiPageId + ", pageTitle=" + this.pageTitle + "]";
+	}
+
+	public void setPageTitle(PageTitle pageTitle) {
+
+		this.pageTitle = pageTitle;
 	}
 
 }

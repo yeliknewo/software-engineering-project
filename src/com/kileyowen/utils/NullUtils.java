@@ -22,7 +22,7 @@ public class NullUtils {
 	 * @throws ExceptionNull
 	 *             thrown when obj is null
 	 */
-	public static final <T> T assertNotNull(final @Nullable T obj, final String nullMessage) throws ExceptionNull {
+	public static final <T> T assertNotNull(final @Nullable T obj, final String nullMessage) {
 
 		if (obj == null) {
 

@@ -68,6 +68,16 @@ public enum WikiRequestKey {
 
 		}
 
+	},
+
+	REDIRECT {
+
+		@Override
+		public String toString() {
+
+			return "redirects";
+
+		}
 	};
 
 }

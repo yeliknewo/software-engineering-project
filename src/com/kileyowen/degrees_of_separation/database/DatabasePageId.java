@@ -3,6 +3,8 @@ package com.kileyowen.degrees_of_separation.database;
 
 import org.eclipse.jdt.annotation.Nullable;
 
+import com.kileyowen.utils.NullUtils;
+
 public class DatabasePageId {
 
 	private final int databasePageId;
@@ -50,7 +52,7 @@ public class DatabasePageId {
 	@Override
 	public String toString() {
 
-		return Integer.toString(this.databasePageId);
+		return NullUtils.assertNotNull(Integer.toString(this.databasePageId), "ToString was null");
 	}
 
 }

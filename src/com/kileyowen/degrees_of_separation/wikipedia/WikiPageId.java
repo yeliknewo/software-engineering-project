@@ -3,6 +3,8 @@ package com.kileyowen.degrees_of_separation.wikipedia;
 
 import org.eclipse.jdt.annotation.Nullable;
 
+import com.kileyowen.utils.NullUtils;
+
 public class WikiPageId {
 
 	private final int wikiPageId;
@@ -49,7 +51,7 @@ public class WikiPageId {
 	@Override
 	public String toString() {
 
-		return Integer.toString(this.wikiPageId);
+		return NullUtils.assertNotNull(Integer.toString(this.wikiPageId), "ToString was null");
 
 	}
 

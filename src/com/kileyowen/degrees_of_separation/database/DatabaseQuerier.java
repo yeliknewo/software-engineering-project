@@ -13,23 +13,47 @@ import com.kileyowen.degrees_of_separation.Page;
 import com.kileyowen.degrees_of_separation.PageTitle;
 import com.kileyowen.degrees_of_separation.wikipedia.WikiPage;
 import com.kileyowen.degrees_of_separation.wikipedia.WikiPageId;
+import com.kileyowen.utils.NullUtils;
 
 public class DatabaseQuerier {
 
-	public static final void addPage(final String databasePath, final WikiPage wikiPage) {
+	private static final String DEFAULT_STRING_ADDRESS = "test.db";
 
-		final String databaseString = DatabaseQuerier.makeDatabaseString(databasePath);
+	private static final ThreadLocal<Connection> CONNECTION = NullUtils.assertNotNull(ThreadLocal.withInitial(() -> {
 
-		try (final Connection connection = DriverManager.getConnection(databaseString)) {
+		try {
 
-			try (final Statement statement = connection.createStatement()) {
+			final Connection connection = NullUtils.assertNotNull(DriverManager.getConnection(DatabaseQuerier.makeDatabaseString(DatabaseQuerier.DEFAULT_STRING_ADDRESS)), "Failed to connect to database");
 
-				statement.setQueryTimeout(30);
+			connection.setAutoCommit(false);
 
-				final String str = String.format("INSERT INTO page (wikipedia_page_id, page_title, last_updated_date) VALUES (\"%s\", \"%s\", CURRENT_DATE);", wikiPage.getWikiPageId().toString(), wikiPage.getPageTitle().getDatabasePageTitle());
+			return connection;
 
-				statement.executeUpdate(str);
-			}
+		} catch (final SQLException e) {
+
+			throw new RuntimeException(e);
+
+		}
+
+	}), "Connection is null");
+
+	private static final ThreadLocal<Integer> COMMIT_COUNTER = NullUtils.assertNotNull(ThreadLocal.withInitial(() -> {
+
+		return DatabaseQuerier.DEFAULT_COMMIT_COUNTER;
+
+	}), "Commit Counter is null");
+
+	private static final Integer DEFAULT_COMMIT_COUNTER = new Integer(10000);
+
+	public static final void addPage(final WikiPage wikiPage) {
+
+		try (final Statement statement = DatabaseQuerier.getConnection().createStatement()) {
+
+			statement.setQueryTimeout(30);
+
+			final String str = String.format("INSERT INTO page (wikipedia_page_id, page_title, last_updated_date) VALUES ('%s', '%s', CURRENT_DATE);", wikiPage.getWikiPageId().toString(), wikiPage.getPageTitle().getDatabasePageTitle());
+
+			statement.executeUpdate(str);
 
 		} catch (final SQLException e) {
 
@@ -39,37 +63,31 @@ public class DatabaseQuerier {
 
 	}
 
-	public static void addPageLinksToDatabase(final String databasePath, final Page page, final List<WikiPage> wikiPages) {
-
-		final String databaseString = DatabaseQuerier.makeDatabaseString(databasePath);
+	public static void addPageLinksToDatabase(final Page page, final List<WikiPage> wikiPages) {
 
 		for (final WikiPage wikiPage : wikiPages) {
 
 			try {
 
-				DatabaseQuerier.getPageByPageTitle(databasePath, wikiPage.getPageTitle());
+				DatabaseQuerier.getPageByPageTitle(wikiPage.getPageTitle());
 
 			} catch (final ExceptionPageNotStored e1) {
 
-				DatabaseQuerier.addPage(databasePath, wikiPage);
+				DatabaseQuerier.addPage(wikiPage);
 
 			}
 
-			try (final Connection connection = DriverManager.getConnection(databaseString)) {
+			try (final Statement statement = DatabaseQuerier.getConnection().createStatement()) {
 
-				try (final Statement statement = connection.createStatement()) {
+				statement.setQueryTimeout(30);
 
-					statement.setQueryTimeout(30);
+				final String str = String.format("INSERT INTO path (from_page_id, to_page_id, distance, last_updated_date) VALUES ('%s', '%s', 1, CURRENT_DATE);", DatabaseQuerier.getPageByPageTitle(wikiPage.getPageTitle()).getDatabasePageId(), page.getDatabasePageId());
 
-					final String str = String.format("INSERT INTO path (from_page_id, to_page_id, distance, last_updated_date) VALUES (\"%s\", \"%s\", 1, CURRENT_DATE);", DatabaseQuerier.getPageByPageTitle(databasePath, wikiPage.getPageTitle()).getDatabasePageId(), page.getDatabasePageId());
+				statement.executeUpdate(str);
 
-					statement.executeUpdate(str);
+			} catch (final ExceptionPageNotStored e) {
 
-				} catch (final ExceptionPageNotStored e) {
-
-					throw new RuntimeException("Unable to Add page to Database");
-
-				}
+				throw new RuntimeException("Unable to Add page to Database");
 
 			} catch (final SQLException e) {
 
@@ -79,23 +97,53 @@ public class DatabaseQuerier {
 
 		}
 
+		try (final Statement statement = DatabaseQuerier.getConnection().createStatement()) {
+
+			statement.setQueryTimeout(30);
+
+			final String str = String.format("UPDATE page SET last_links_updated_date=CURRENT_DATE WHERE page_id=%s", page.getDatabasePageId());
+
+			statement.executeUpdate(str);
+
+		} catch (final SQLException e) {
+
+			throw new RuntimeException(e);
+		}
+
 	}
 
-	public static final Page getPageByPageTitle(final String databasePath, final PageTitle pageTitle) throws ExceptionPageNotStored {
+	public static ThreadLocal<Integer> getCommitCounter() {
 
-		final String databaseString = DatabaseQuerier.makeDatabaseString(databasePath);
+		return DatabaseQuerier.COMMIT_COUNTER;
+	}
 
-		try (final Connection connection = DriverManager.getConnection(databaseString)) {
+	private static final Connection getConnection() throws SQLException {
 
-			try (final Statement statement = connection.createStatement()) {
+		DatabaseQuerier.getCommitCounter().set(new Integer(DatabaseQuerier.getCommitCounter().get().intValue() - 1));
 
-				statement.setQueryTimeout(30);
+		if (DatabaseQuerier.getCommitCounter().get().intValue() <= 0) {
 
-				final String query = String.format("SELECT page_id, wikipedia_page_id, page_title FROM page WHERE page_title=\"%s\"", pageTitle.getDatabasePageTitle());
+			DatabaseQuerier.getCommitCounter().set(DatabaseQuerier.DEFAULT_COMMIT_COUNTER);
 
-				System.out.println(query);
+			DatabaseQuerier.CONNECTION.get().commit();
 
-				final ResultSet set = statement.executeQuery(query);
+		}
+
+		return DatabaseQuerier.CONNECTION.get();
+
+	}
+
+	public static final Page getPageByPageTitle(final PageTitle pageTitle) throws ExceptionPageNotStored {
+
+		try (final Statement statement = DatabaseQuerier.getConnection().createStatement()) {
+
+			statement.setQueryTimeout(30);
+
+			final String databasePageTitle = pageTitle.getDatabasePageTitle();
+
+			final String query = String.format("SELECT page_id, wikipedia_page_id, page_title, last_links_updated_date FROM page WHERE page_title='%s'", databasePageTitle);
+
+			try (final ResultSet set = statement.executeQuery(query)) {
 
 				if (set.isClosed()) {
 
@@ -103,7 +151,9 @@ public class DatabaseQuerier {
 
 				}
 
-				return new Page(new DatabasePageId(set.getInt(1)), new WikiPageId(set.getInt(2)), PageTitle.makePageTitleByDatabasePageTitle(set.getString(3)));
+				final Page page = new Page(new DatabasePageId(set.getInt(1)), new WikiPageId(set.getInt(2)), new PageTitle(NullUtils.assertNotNull(set.getString(3), "PageTitleNull")), set.getString(4) != null);
+
+				return page;
 
 			}
 
@@ -115,37 +165,33 @@ public class DatabaseQuerier {
 
 	}
 
-	public static List<Page> getPageLinksByPage(final String databasePath, final Page page) throws ExceptionPageLinksNotStored, ExceptionPageNotStored {
+	public static List<Page> getPageLinksByPage(final Page page) throws ExceptionPageLinksNotStored, ExceptionPageNotStored {
 
-		final String databaseString = DatabaseQuerier.makeDatabaseString(databasePath);
+		DatabaseQuerier.getPageByPageTitle(page.getPageTitle());
 
-		try (final Connection connection = DriverManager.getConnection(databaseString)) {
+		if (!page.areLinksUpToDate()) {
 
-			try (final Statement statement = connection.createStatement()) {
+			throw new ExceptionPageLinksNotStored("Links not stored yet");
 
-				statement.setQueryTimeout(30);
+		}
 
-				try (final ResultSet set = statement.executeQuery(String.format("SELECT page_id, wikipedia_page_id, page_title FROM page WHERE page.page_id IN(SELECT from_page_id FROM path WHERE path.to_page_id IN (SELECT page_id FROM page WHERE page_title=\"%s\"))", page.getPageTitle().getDatabasePageTitle()))) {
+		try (final Statement statement = DatabaseQuerier.getConnection().createStatement()) {
 
-					if (set.isClosed()) {
+			statement.setQueryTimeout(30);
 
-						throw new ExceptionPageNotStored("ResultSet was closed on arrival");
+			try (final ResultSet set = statement.executeQuery(String.format("SELECT page_id, wikipedia_page_id, page_title, last_links_updated_date FROM page WHERE page.page_id IN(SELECT from_page_id FROM path WHERE path.to_page_id IN (SELECT page_id FROM page WHERE page_title='%s'))", page.getPageTitle().getDatabasePageTitle()))) {
 
-					}
+				final List<Page> pages = new ArrayList<>();
 
-					final List<Page> pages = new ArrayList<Page>();
+				while (!set.isAfterLast()) {
 
-					while (!set.isAfterLast()) {
+					pages.add(new Page(new DatabasePageId(set.getInt(1)), new WikiPageId(set.getInt(2)), new PageTitle(NullUtils.assertNotNull(set.getString(3), "PageTitle was not found in database")), set.getString(4) != null));
 
-						pages.add(new Page(new DatabasePageId(set.getInt(1)), new WikiPageId(set.getInt(2)), PageTitle.makePageTitleByDatabasePageTitle(set.getString(3))));
+					set.next();
 
-						set.next();
-
-					}
-
-					return pages;
 				}
 
+				return pages;
 			}
 
 		} catch (final SQLException e) {
@@ -156,19 +202,13 @@ public class DatabaseQuerier {
 
 	}
 
-	public static final void initDatabase(final String databasePath) {
+	public static final void initDatabase() {
 
-		final String databaseString = DatabaseQuerier.makeDatabaseString(databasePath);
+		try (final Statement statement = DatabaseQuerier.getConnection().createStatement()) {
 
-		try (final Connection connection = DriverManager.getConnection(databaseString)) {
+			statement.setQueryTimeout(30);
 
-			try (final Statement statement = connection.createStatement()) {
-
-				statement.setQueryTimeout(30);
-
-				statement.executeUpdate("CREATE TABLE IF NOT EXISTS page ( page_id INTEGER NOT NULL PRIMARY KEY, wikipedia_page_id INTEGER NOT NULL UNIQUE, page_title TEXT NOT NULL, last_updated_date TEXT ); CREATE TABLE IF NOT EXISTS path ( path_id INTEGER NOT NULL PRIMARY KEY, from_page_id INTEGER NOT NULL, to_page_id INTEGER NOT NULL, distance INTEGER NOT NULL, last_updated_date TEXT, FOREIGN KEY(from_page_id) REFERENCES page(page_id), FOREIGN KEY(to_page_id) REFERENCES page(page_id) ); CREATE TABLE IF NOT EXISTS path_to_path ( path_to_path_id INTEGER NOT NULL PRIMARY KEY, from_path_id INTEGER NOT NULL, to_path_id INTEGER NOT NULL, last_updated_date TEXT, FOREIGN KEY(from_path_id) REFERENCES path(path_id), FOREIGN KEY(to_path_id) REFERENCES path(path_id) );");
-
-			}
+			statement.executeUpdate("CREATE TABLE IF NOT EXISTS page ( page_id INTEGER NOT NULL PRIMARY KEY, wikipedia_page_id INTEGER NOT NULL UNIQUE, page_title TEXT NOT NULL, last_updated_date TEXT, last_links_updated_date TEXT ); CREATE TABLE IF NOT EXISTS path ( path_id INTEGER NOT NULL PRIMARY KEY, from_page_id INTEGER NOT NULL, to_page_id INTEGER NOT NULL, distance INTEGER NOT NULL, last_updated_date TEXT, FOREIGN KEY(from_page_id) REFERENCES page(page_id), FOREIGN KEY(to_page_id) REFERENCES page(page_id) ); CREATE TABLE IF NOT EXISTS path_link ( path_link_id INTEGER NOT NULL PRIMARY KEY, path_fk INTEGER NOT NULL, from_page_id INTEGER NOT NULL, to_page_id INTEGER NOT NULL, path_link_index INTEGER NOT NULL, last_updated_date TEXT, FOREIGN KEY(path_fk) REFERENCES path(path_id), FOREIGN KEY(from_page_id) REFERENCES page(page_id), FOREIGN KEY(to_page_id) REFERENCES page(page_id) );");
 
 		} catch (final SQLException e) {
 

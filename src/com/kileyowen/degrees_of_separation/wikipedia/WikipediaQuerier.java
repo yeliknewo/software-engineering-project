@@ -17,6 +17,7 @@ import org.json.JSONObject;
 import org.json.JSONTokener;
 
 import com.kileyowen.degrees_of_separation.PageTitle;
+import com.kileyowen.utils.NullUtils;
 
 public class WikipediaQuerier {
 
@@ -84,6 +85,16 @@ public class WikipediaQuerier {
 	 */
 	private static final String PAGE_TITLE = "title";
 
+	//	/**
+	//	 * Query Level
+	//	 * Contains an array of redirect objects
+	//	 */
+	//	private static final String REDIRECTS = "redirects";
+	//
+	//	private static final String FROM = "from";
+	//
+	//	private static final String TO = "to";
+
 	private static String addUrlParameter(final String original, @Nullable final String key, final String value) {
 
 		final StringBuilder stringBuilder = new StringBuilder();
@@ -92,7 +103,7 @@ public class WikipediaQuerier {
 
 		stringBuilder.append(String.format("&%s=%s", key, value));
 
-		return stringBuilder.toString();
+		return NullUtils.assertNotNull(stringBuilder.toString(), "StringBuilder made null");
 
 	}
 
@@ -101,6 +112,8 @@ public class WikipediaQuerier {
 		final HashMap<WikiRequestKey, String> pairs = new HashMap<>();
 
 		pairs.put(WikiRequestKey.PAGE_TITLES, pageTitle.getWikiPageTitle());
+
+		pairs.put(WikiRequestKey.REDIRECT, "1");
 
 		final JSONObject rootJson = WikipediaQuerier.runQuery(pairs);
 
@@ -122,7 +135,7 @@ public class WikipediaQuerier {
 
 							final String pageTitleValue = pageObj.getString(WikipediaQuerier.PAGE_TITLE);
 
-							return new WikiPage(new WikiPageId(pageObj.getInt(WikipediaQuerier.PAGE_ID)), PageTitle.makePageTitleByWikiPageTitle(pageTitleValue));
+							return new WikiPage(new WikiPageId(pageObj.getInt(WikipediaQuerier.PAGE_ID)), new PageTitle(NullUtils.assertNotNull(pageTitleValue, "Page Title Value was null")));
 
 						}
 
@@ -167,6 +180,7 @@ public class WikipediaQuerier {
 			Optional<WikiPageId> pageIdOpt = Optional.empty();
 
 			if (rootJson.has(WikipediaQuerier.QUERY)) {
+
 				final JSONObject queryObj = rootJson.getJSONObject(WikipediaQuerier.QUERY);
 
 				if (queryObj.has(WikipediaQuerier.PAGES)) {
@@ -195,13 +209,14 @@ public class WikipediaQuerier {
 
 				final int linksHereContinue = continueObj.getInt(WikipediaQuerier.LINKS_HERE_CONTINUE);
 
-				pages.addAll(WikipediaQuerier.getPageLinksByPageWithContinue(pageIdOpt.get(), Integer.toString(linksHereContinue)));
+				pages.addAll(WikipediaQuerier.getPageLinksByPageWithContinue(pageIdOpt.get(), NullUtils.assertNotNull(Integer.toString(linksHereContinue), "Integer to string was null")));
 
 			}
 
 		}
 
 		if (rootJson.has(WikipediaQuerier.QUERY)) {
+
 			final JSONObject queryObj = rootJson.getJSONObject(WikipediaQuerier.QUERY);
 
 			if (queryObj.has(WikipediaQuerier.PAGES)) {
@@ -228,7 +243,7 @@ public class WikipediaQuerier {
 
 							if (keyValueJsonObj.has(WikipediaQuerier.PAGE_ID) && keyValueJsonObj.has(WikipediaQuerier.PAGE_TITLE)) {
 
-								pages.add(new WikiPage(new WikiPageId(keyValueJsonObj.getInt(WikipediaQuerier.PAGE_ID)), PageTitle.makePageTitleByWikiPageTitle(keyValueJsonObj.getString(WikipediaQuerier.PAGE_TITLE))));
+								pages.add(new WikiPage(new WikiPageId(keyValueJsonObj.getInt(WikipediaQuerier.PAGE_ID)), new PageTitle(NullUtils.assertNotNull(keyValueJsonObj.getString(WikipediaQuerier.PAGE_TITLE), "Json Value String was null"))));
 
 							}
 

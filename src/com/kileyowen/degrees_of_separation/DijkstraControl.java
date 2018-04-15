@@ -8,7 +8,6 @@ import java.util.stream.Stream;
 
 import com.kileyowen.degrees_of_separation.database.ExceptionPageLinksNotStored;
 import com.kileyowen.degrees_of_separation.wikipedia.ExceptionPageDoesNotExistOnWiki;
-import com.kileyowen.utils.ExceptionNull;
 import com.kileyowen.utils.NullUtils;
 
 public class DijkstraControl {
@@ -25,9 +24,9 @@ public class DijkstraControl {
 
 	private final Querier querier;
 
-	public DijkstraControl(final boolean online, final String databasePath) {
+	public DijkstraControl(final boolean online) {
 
-		this.querier = new Querier(online, databasePath);
+		this.querier = new Querier(online);
 
 	}
 
@@ -73,7 +72,7 @@ public class DijkstraControl {
 
 			final Node openNode = openPages.remove(0);
 
-			System.out.println(openNode.getPage().getPageTitle());
+			System.out.println(openNode.getPage().getPageTitle().getRawPageTitle());
 
 			this.querier.getLinksHereByPage(openNode.getPage()).stream().forEach((final Page page) -> {
 
@@ -82,16 +81,7 @@ public class DijkstraControl {
 					return node.getPage().equals(page);
 
 				})) {
-
-					try {
-
-						openPages.add(new Node(NullUtils.assertNotNull(page, "Page was null"), openNode, openNode.getDistance() + 1));
-
-					} catch (final ExceptionNull e) {
-
-						e.printStackTrace();
-
-					}
+					openPages.add(new Node(NullUtils.assertNotNull(page, "Page was null"), openNode, openNode.getDistance() + 1));
 
 				}
 
